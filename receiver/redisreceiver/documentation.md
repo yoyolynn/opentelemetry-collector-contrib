@@ -24,6 +24,11 @@ These are the metrics available for this scraper.
 | **redis.keys.expired** | Total number of key expiration events |  | Sum(Int) | <ul> </ul> |
 | **redis.keyspace.hits** | Number of successful lookup of keys in the main dictionary |  | Sum(Int) | <ul> </ul> |
 | **redis.keyspace.misses** | Number of failed lookup of keys in the main dictionary |  | Sum(Int) | <ul> </ul> |
+| **redis.latencystat.p100** | latency stat with percentile 100 |  | Gauge(Double) | <ul> <li>command</li> </ul> |
+| **redis.latencystat.p50** | latency stat with percentile 50 |  | Gauge(Double) | <ul> <li>command</li> </ul> |
+| **redis.latencystat.p90** | latency stat with percentile 90 |  | Gauge(Double) | <ul> <li>command</li> </ul> |
+| **redis.latencystat.p99** | latency stat with percentile 99 |  | Gauge(Double) | <ul> <li>command</li> </ul> |
+| **redis.latencystat.p99.9** | latency stat with percentile 99.9 |  | Gauge(Double) | <ul> <li>command</li> </ul> |
 | **redis.latest_fork** | Duration of the latest fork operation in microseconds | us | Gauge(Int) | <ul> </ul> |
 | **redis.memory.fragmentation_ratio** | Ratio between used_memory_rss and used_memory |  | Gauge(Double) | <ul> </ul> |
 | **redis.memory.lua** | Number of bytes used by the Lua engine | By | Gauge(Int) | <ul> </ul> |
@@ -51,5 +56,6 @@ metrics:
 
 | Name | Description | Values |
 | ---- | ----------- | ------ |
+| command | Redis command in latency stats with specific percentile |  |
 | db | Redis database identifier |  |
 | state | Redis CPU usage state |  |

@@ -38,11 +38,31 @@ func TestRedisRunnable(t *testing.T) {
 	md, err := runner.Scrape(context.Background())
 	require.NoError(t, err)
 	// + 6 because there are two keyspace entries each of which has three metrics
-	assert.Equal(t, len(rs.dataPointRecorders())+6, md.DataPointCount())
+	// + 15 because there are five command latency entries each of which has three percentile stats
+	assert.Equal(t, len(rs.dataPointRecorders())+6+15, md.DataPointCount())
 	rm := md.ResourceMetrics().At(0)
 	ilm := rm.ScopeMetrics().At(0)
 	il := ilm.Scope()
 	assert.Equal(t, "otelcol/redisreceiver", il.Name())
+	rms := md.ResourceMetrics()
+	for i := 0; i < rms.Len(); i++ {
+		rmi := rms.At(i)
+		ilms := rmi.ScopeMetrics()
+		for j := 0; j < ilms.Len(); j++ {
+			ilm := ilms.At(j)
+			ms := ilm.Metrics()
+			for k := 0; k < ms.Len(); k++ {
+				m := ms.At(k)
+				if m.Name() == "redis.latencystat.p50" {
+					for idx := 0; idx < m.Gauge().DataPoints().Len(); idx++ {
+						if m.Gauge().DataPoints().At(idx).Attributes().AsRaw()["command"] == "dbsize" {
+							assert.Equal(t, 30.345, m.Gauge().DataPoints().At(idx).DoubleVal())
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 func TestNewReceiver_invalid_auth_error(t *testing.T) {

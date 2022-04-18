@@ -28,6 +28,7 @@ func TestParser(t *testing.T) {
 	s := newFakeAPIParser()
 	info, err := s.info()
 	require.Nil(t, err)
-	require.Equal(t, 123, len(info))
+	require.Equal(t, 123+5, len(info))                     // with 5 additional latencyStats lines
 	require.Equal(t, "1.24", info["allocator_frag_ratio"]) // spot check
+	require.Equal(t, "p50=10.123,p99=110.234,p99.9=120.234", info["latency_percentiles_usec_info"])
 }

@@ -32,6 +32,11 @@ type MetricsSettings struct {
 	RedisKeysExpired                       MetricSettings `mapstructure:"redis.keys.expired"`
 	RedisKeyspaceHits                      MetricSettings `mapstructure:"redis.keyspace.hits"`
 	RedisKeyspaceMisses                    MetricSettings `mapstructure:"redis.keyspace.misses"`
+	RedisLatencystatP100                   MetricSettings `mapstructure:"redis.latencystat.p100"`
+	RedisLatencystatP50                    MetricSettings `mapstructure:"redis.latencystat.p50"`
+	RedisLatencystatP90                    MetricSettings `mapstructure:"redis.latencystat.p90"`
+	RedisLatencystatP99                    MetricSettings `mapstructure:"redis.latencystat.p99"`
+	RedisLatencystatP999                   MetricSettings `mapstructure:"redis.latencystat.p99.9"`
 	RedisLatestFork                        MetricSettings `mapstructure:"redis.latest_fork"`
 	RedisMemoryFragmentationRatio          MetricSettings `mapstructure:"redis.memory.fragmentation_ratio"`
 	RedisMemoryLua                         MetricSettings `mapstructure:"redis.memory.lua"`
@@ -95,6 +100,21 @@ func DefaultMetricsSettings() MetricsSettings {
 			Enabled: true,
 		},
 		RedisKeyspaceMisses: MetricSettings{
+			Enabled: true,
+		},
+		RedisLatencystatP100: MetricSettings{
+			Enabled: true,
+		},
+		RedisLatencystatP50: MetricSettings{
+			Enabled: true,
+		},
+		RedisLatencystatP90: MetricSettings{
+			Enabled: true,
+		},
+		RedisLatencystatP99: MetricSettings{
+			Enabled: true,
+		},
+		RedisLatencystatP999: MetricSettings{
 			Enabled: true,
 		},
 		RedisLatestFork: MetricSettings{
@@ -951,6 +971,261 @@ func newMetricRedisKeyspaceMisses(settings MetricSettings) metricRedisKeyspaceMi
 	return m
 }
 
+type metricRedisLatencystatP100 struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	settings MetricSettings // metric settings provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills redis.latencystat.p100 metric with initial data.
+func (m *metricRedisLatencystatP100) init() {
+	m.data.SetName("redis.latencystat.p100")
+	m.data.SetDescription("latency stat with percentile 100")
+	m.data.SetUnit("")
+	m.data.SetDataType(pmetric.MetricDataTypeGauge)
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricRedisLatencystatP100) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val float64, commandAttributeValue string) {
+	if !m.settings.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetDoubleVal(val)
+	dp.Attributes().Insert(A.Command, pcommon.NewValueString(commandAttributeValue))
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricRedisLatencystatP100) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricRedisLatencystatP100) emit(metrics pmetric.MetricSlice) {
+	if m.settings.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricRedisLatencystatP100(settings MetricSettings) metricRedisLatencystatP100 {
+	m := metricRedisLatencystatP100{settings: settings}
+	if settings.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricRedisLatencystatP50 struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	settings MetricSettings // metric settings provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills redis.latencystat.p50 metric with initial data.
+func (m *metricRedisLatencystatP50) init() {
+	m.data.SetName("redis.latencystat.p50")
+	m.data.SetDescription("latency stat with percentile 50")
+	m.data.SetUnit("")
+	m.data.SetDataType(pmetric.MetricDataTypeGauge)
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricRedisLatencystatP50) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val float64, commandAttributeValue string) {
+	if !m.settings.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetDoubleVal(val)
+	dp.Attributes().Insert(A.Command, pcommon.NewValueString(commandAttributeValue))
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricRedisLatencystatP50) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricRedisLatencystatP50) emit(metrics pmetric.MetricSlice) {
+	if m.settings.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricRedisLatencystatP50(settings MetricSettings) metricRedisLatencystatP50 {
+	m := metricRedisLatencystatP50{settings: settings}
+	if settings.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricRedisLatencystatP90 struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	settings MetricSettings // metric settings provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills redis.latencystat.p90 metric with initial data.
+func (m *metricRedisLatencystatP90) init() {
+	m.data.SetName("redis.latencystat.p90")
+	m.data.SetDescription("latency stat with percentile 90")
+	m.data.SetUnit("")
+	m.data.SetDataType(pmetric.MetricDataTypeGauge)
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricRedisLatencystatP90) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val float64, commandAttributeValue string) {
+	if !m.settings.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetDoubleVal(val)
+	dp.Attributes().Insert(A.Command, pcommon.NewValueString(commandAttributeValue))
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricRedisLatencystatP90) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricRedisLatencystatP90) emit(metrics pmetric.MetricSlice) {
+	if m.settings.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricRedisLatencystatP90(settings MetricSettings) metricRedisLatencystatP90 {
+	m := metricRedisLatencystatP90{settings: settings}
+	if settings.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricRedisLatencystatP99 struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	settings MetricSettings // metric settings provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills redis.latencystat.p99 metric with initial data.
+func (m *metricRedisLatencystatP99) init() {
+	m.data.SetName("redis.latencystat.p99")
+	m.data.SetDescription("latency stat with percentile 99")
+	m.data.SetUnit("")
+	m.data.SetDataType(pmetric.MetricDataTypeGauge)
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricRedisLatencystatP99) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val float64, commandAttributeValue string) {
+	if !m.settings.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetDoubleVal(val)
+	dp.Attributes().Insert(A.Command, pcommon.NewValueString(commandAttributeValue))
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricRedisLatencystatP99) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricRedisLatencystatP99) emit(metrics pmetric.MetricSlice) {
+	if m.settings.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricRedisLatencystatP99(settings MetricSettings) metricRedisLatencystatP99 {
+	m := metricRedisLatencystatP99{settings: settings}
+	if settings.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricRedisLatencystatP999 struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	settings MetricSettings // metric settings provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills redis.latencystat.p99.9 metric with initial data.
+func (m *metricRedisLatencystatP999) init() {
+	m.data.SetName("redis.latencystat.p99.9")
+	m.data.SetDescription("latency stat with percentile 99.9")
+	m.data.SetUnit("")
+	m.data.SetDataType(pmetric.MetricDataTypeGauge)
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricRedisLatencystatP999) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val float64, commandAttributeValue string) {
+	if !m.settings.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetDoubleVal(val)
+	dp.Attributes().Insert(A.Command, pcommon.NewValueString(commandAttributeValue))
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricRedisLatencystatP999) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricRedisLatencystatP999) emit(metrics pmetric.MetricSlice) {
+	if m.settings.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricRedisLatencystatP999(settings MetricSettings) metricRedisLatencystatP999 {
+	m := metricRedisLatencystatP999{settings: settings}
+	if settings.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
 type metricRedisLatestFork struct {
 	data     pmetric.Metric // data buffer for generated metric.
 	settings MetricSettings // metric settings provided by user.
@@ -1621,6 +1896,11 @@ type MetricsBuilder struct {
 	metricRedisKeysExpired                       metricRedisKeysExpired
 	metricRedisKeyspaceHits                      metricRedisKeyspaceHits
 	metricRedisKeyspaceMisses                    metricRedisKeyspaceMisses
+	metricRedisLatencystatP100                   metricRedisLatencystatP100
+	metricRedisLatencystatP50                    metricRedisLatencystatP50
+	metricRedisLatencystatP90                    metricRedisLatencystatP90
+	metricRedisLatencystatP99                    metricRedisLatencystatP99
+	metricRedisLatencystatP999                   metricRedisLatencystatP999
 	metricRedisLatestFork                        metricRedisLatestFork
 	metricRedisMemoryFragmentationRatio          metricRedisMemoryFragmentationRatio
 	metricRedisMemoryLua                         metricRedisMemoryLua
@@ -1666,6 +1946,11 @@ func NewMetricsBuilder(settings MetricsSettings, options ...metricBuilderOption)
 		metricRedisKeysExpired:                       newMetricRedisKeysExpired(settings.RedisKeysExpired),
 		metricRedisKeyspaceHits:                      newMetricRedisKeyspaceHits(settings.RedisKeyspaceHits),
 		metricRedisKeyspaceMisses:                    newMetricRedisKeyspaceMisses(settings.RedisKeyspaceMisses),
+		metricRedisLatencystatP100:                   newMetricRedisLatencystatP100(settings.RedisLatencystatP100),
+		metricRedisLatencystatP50:                    newMetricRedisLatencystatP50(settings.RedisLatencystatP50),
+		metricRedisLatencystatP90:                    newMetricRedisLatencystatP90(settings.RedisLatencystatP90),
+		metricRedisLatencystatP99:                    newMetricRedisLatencystatP99(settings.RedisLatencystatP99),
+		metricRedisLatencystatP999:                   newMetricRedisLatencystatP999(settings.RedisLatencystatP999),
 		metricRedisLatestFork:                        newMetricRedisLatestFork(settings.RedisLatestFork),
 		metricRedisMemoryFragmentationRatio:          newMetricRedisMemoryFragmentationRatio(settings.RedisMemoryFragmentationRatio),
 		metricRedisMemoryLua:                         newMetricRedisMemoryLua(settings.RedisMemoryLua),
@@ -1728,6 +2013,11 @@ func (mb *MetricsBuilder) EmitForResource(ro ...ResourceOption) {
 	mb.metricRedisKeysExpired.emit(ils.Metrics())
 	mb.metricRedisKeyspaceHits.emit(ils.Metrics())
 	mb.metricRedisKeyspaceMisses.emit(ils.Metrics())
+	mb.metricRedisLatencystatP100.emit(ils.Metrics())
+	mb.metricRedisLatencystatP50.emit(ils.Metrics())
+	mb.metricRedisLatencystatP90.emit(ils.Metrics())
+	mb.metricRedisLatencystatP99.emit(ils.Metrics())
+	mb.metricRedisLatencystatP999.emit(ils.Metrics())
 	mb.metricRedisLatestFork.emit(ils.Metrics())
 	mb.metricRedisMemoryFragmentationRatio.emit(ils.Metrics())
 	mb.metricRedisMemoryLua.emit(ils.Metrics())
@@ -1837,6 +2127,31 @@ func (mb *MetricsBuilder) RecordRedisKeyspaceMissesDataPoint(ts pcommon.Timestam
 	mb.metricRedisKeyspaceMisses.recordDataPoint(mb.startTime, ts, val)
 }
 
+// RecordRedisLatencystatP100DataPoint adds a data point to redis.latencystat.p100 metric.
+func (mb *MetricsBuilder) RecordRedisLatencystatP100DataPoint(ts pcommon.Timestamp, val float64, commandAttributeValue string) {
+	mb.metricRedisLatencystatP100.recordDataPoint(mb.startTime, ts, val, commandAttributeValue)
+}
+
+// RecordRedisLatencystatP50DataPoint adds a data point to redis.latencystat.p50 metric.
+func (mb *MetricsBuilder) RecordRedisLatencystatP50DataPoint(ts pcommon.Timestamp, val float64, commandAttributeValue string) {
+	mb.metricRedisLatencystatP50.recordDataPoint(mb.startTime, ts, val, commandAttributeValue)
+}
+
+// RecordRedisLatencystatP90DataPoint adds a data point to redis.latencystat.p90 metric.
+func (mb *MetricsBuilder) RecordRedisLatencystatP90DataPoint(ts pcommon.Timestamp, val float64, commandAttributeValue string) {
+	mb.metricRedisLatencystatP90.recordDataPoint(mb.startTime, ts, val, commandAttributeValue)
+}
+
+// RecordRedisLatencystatP99DataPoint adds a data point to redis.latencystat.p99 metric.
+func (mb *MetricsBuilder) RecordRedisLatencystatP99DataPoint(ts pcommon.Timestamp, val float64, commandAttributeValue string) {
+	mb.metricRedisLatencystatP99.recordDataPoint(mb.startTime, ts, val, commandAttributeValue)
+}
+
+// RecordRedisLatencystatP999DataPoint adds a data point to redis.latencystat.p99.9 metric.
+func (mb *MetricsBuilder) RecordRedisLatencystatP999DataPoint(ts pcommon.Timestamp, val float64, commandAttributeValue string) {
+	mb.metricRedisLatencystatP999.recordDataPoint(mb.startTime, ts, val, commandAttributeValue)
+}
+
 // RecordRedisLatestForkDataPoint adds a data point to redis.latest_fork metric.
 func (mb *MetricsBuilder) RecordRedisLatestForkDataPoint(ts pcommon.Timestamp, val int64) {
 	mb.metricRedisLatestFork.recordDataPoint(mb.startTime, ts, val)
@@ -1913,11 +2228,14 @@ func (mb *MetricsBuilder) Reset(options ...metricBuilderOption) {
 
 // Attributes contains the possible metric attributes that can be used.
 var Attributes = struct {
+	// Command (Redis command in latency stats with specific percentile)
+	Command string
 	// Db (Redis database identifier)
 	Db string
 	// State (Redis CPU usage state)
 	State string
 }{
+	"command",
 	"db",
 	"state",
 }

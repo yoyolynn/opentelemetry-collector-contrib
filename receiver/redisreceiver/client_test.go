@@ -57,4 +57,5 @@ func TestRetrieveInfo(t *testing.T) {
 	res, err := g.retrieveInfo()
 	require.Nil(t, err)
 	require.True(t, strings.HasPrefix(res, "# Server"))
+	require.True(t, strings.Contains(res, "# Latencystats"))
 }

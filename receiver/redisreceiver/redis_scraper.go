@@ -17,6 +17,7 @@ package redisreceiver // import "github.com/open-telemetry/opentelemetry-collect
 import (
 	"context"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-redis/redis/v7"
@@ -87,6 +88,7 @@ func (rs *redisScraper) Scrape(context.Context) (pmetric.Metrics, error) {
 
 	rs.recordCommonMetrics(now, inf)
 	rs.recordKeyspaceMetrics(now, inf)
+	rs.recordLatencyStatsMetrics(now, inf)
 
 	return rs.mb.Emit(), nil
 }
@@ -137,5 +139,38 @@ func (rs *redisScraper) recordKeyspaceMetrics(ts pcommon.Timestamp, inf info) {
 		rs.mb.RecordRedisDbKeysDataPoint(ts, int64(keyspace.keys), keyspace.db)
 		rs.mb.RecordRedisDbExpiresDataPoint(ts, int64(keyspace.expires), keyspace.db)
 		rs.mb.RecordRedisDbAvgTTLDataPoint(ts, int64(keyspace.avgTTL), keyspace.db)
+	}
+}
+
+// recordLatencyStatsMetrics records metrics from 'LatencyStatsMetrics' Redis info key-value pairs,
+// e.g. "latency_percentiles_usec_info:p50=10.123,p99=110.234,p99.9=120.234".
+func (rs *redisScraper) recordLatencyStatsMetrics(ts pcommon.Timestamp, inf info) {
+	keyPrefix := "latency_percentiles_usec_"
+	for infoKey, infoVal := range inf {
+		if (!strings.HasPrefix(infoKey, keyPrefix)) || len(infoKey) <= len(keyPrefix) {
+			continue
+		}
+		command := infoKey[len(keyPrefix):len(infoKey)]
+		latencystats, parsingError := parseLatencystatsString(command, infoVal)
+		if parsingError != nil {
+			rs.settings.Logger.Warn("failed to parse latency stats string", zap.String("command", command),
+				zap.String("latencystats", infoVal), zap.Error(parsingError))
+			continue
+		}
+		for percentile, latency := range latencystats.stats {
+			switch percentile {
+			case "50":
+				rs.mb.RecordRedisLatencystatP50DataPoint(ts, float64(latency), command)
+			case "90":
+				rs.mb.RecordRedisLatencystatP90DataPoint(ts, float64(latency), command)
+			case "99":
+				rs.mb.RecordRedisLatencystatP99DataPoint(ts, float64(latency), command)
+			case "99.9":
+				rs.mb.RecordRedisLatencystatP999DataPoint(ts, float64(latency), command)
+			case "100":
+				rs.mb.RecordRedisLatencystatP100DataPoint(ts, float64(latency), command)
+			}
+		}
+
 	}
 }

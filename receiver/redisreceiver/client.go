@@ -15,6 +15,8 @@
 package redisreceiver // import "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/redisreceiver"
 
 import (
+	"strings"
+
 	"github.com/go-redis/redis/v7"
 )
 
@@ -48,5 +50,14 @@ func (c *redisClient) delimiter() string {
 
 // Retrieve Redis INFO. We retrieve all of the 'sections'.
 func (c *redisClient) retrieveInfo() (string, error) {
-	return c.client.Info().Result()
+	defaultInfo, err := c.client.Info().Result()
+	if err != nil {
+		return "", err
+	}
+	lantencystatsInfo, err := c.client.Info("latencystats").Result()
+	if err != nil {
+		return "", err
+	}
+
+	return strings.Join([]string{defaultInfo, lantencystatsInfo}, c.delimiter()), nil
 }

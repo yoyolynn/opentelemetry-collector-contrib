@@ -138,3 +138,10 @@ cluster_enabled:0
 # Keyspace
 db0:keys=1,expires=2,avg_ttl=3
 db1:keys=4,expires=5,avg_ttl=6
+
+# Latencystats
+latency_percentiles_usec_info:p50=10.123,p99=110.234,p99.9=120.234
+latency_percentiles_usec_auth:p50=20.234,p99=220.345,p99.9=230.345
+latency_percentiles_usec_dbsize:p50=30.345,p99=330.456,p99.9=340.456
+latency_percentiles_usec_set:p50=40.456,p99=440.567,p99.9=450.567
+latency_percentiles_usec_command|docs:p50=50.123,p99=550.234,p99.9=560.234

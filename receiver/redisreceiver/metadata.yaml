@@ -5,6 +5,8 @@ attributes:
     description: Redis CPU usage state
   db:
     description: Redis database identifier
+  command:
+    description: Redis command in latency stats with specific percentile
 
 metrics:
   redis.uptime:
@@ -100,7 +102,7 @@ metrics:
     description: Total number of bytes allocated by Redis using its allocator
     unit: By
     gauge:
-     value_type: int
+      value_type: int
 
   redis.memory.peak:
     enabled: true
@@ -244,3 +246,43 @@ metrics:
     gauge:
       value_type: int
     attributes: [db]
+
+  redis.latencystat.p50:
+    enabled: true
+    description: "latency stat with percentile 50"
+    unit: ""
+    gauge:
+      value_type: double
+    attributes: [command]
+
+  redis.latencystat.p90:
+    enabled: true
+    description: "latency stat with percentile 90"
+    unit: ""
+    gauge:
+      value_type: double
+    attributes: [command]
+
+  redis.latencystat.p99:
+    enabled: true
+    description: "latency stat with percentile 99"
+    unit: ""
+    gauge:
+      value_type: double
+    attributes: [command]
+
+  redis.latencystat.p99.9:
+    enabled: true
+    description: "latency stat with percentile 99.9"
+    unit: ""
+    gauge:
+      value_type: double
+    attributes: [command]
+
+  redis.latencystat.p100:
+    enabled: true
+    description: "latency stat with percentile 100"
+    unit: ""
+    gauge:
+      value_type: double
+    attributes: [command]
